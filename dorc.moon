@@ -8,8 +8,6 @@ hitbox=true
 player=
 	x:120
 	y:68
-	w:9
-	h:15
 	vx:0
 	vy:0
 	ax:1
@@ -24,24 +22,30 @@ player=
 			sprt: 256
 			framecnt:1
 			trans:14
-			ox:-2
+			ox:-3
 			oy:-1
+			cw:11
+			ch:15
 			w:2
 			h:2
 		attack:
 			sprt: 258
 			framecnt:3
 			trans:14
-			ox:-5
+			ox:-3
 			oy:-1
+			cw:11
+			ch:15
 			w:3
 			h:2
 		jump:
 			sprt:320
 			framecnt:1
 			trans:14
-			ox:-2
+			ox:-3
 			oy:-1
+			cw:11
+			ch:15
 			w:2
 			h:2
 		walk:
@@ -50,6 +54,8 @@ player=
 			trans:14
 			ox:-2
 			oy:-1
+			cw:11
+			ch:15
 			w:2
 			h:2
 
@@ -58,7 +64,10 @@ fget8=(id)->peek 0x14404+id
 
 solid=(x,y)->fget(mget(x//8,y//8),0)
 aabb=(o)->
-	o.x+o.vx,o.y+o.vy,o.x+o.vx+o.w-1,o.y+o.vy+o.h-1
+	stdata=o.states[o.state or "idle"]
+	w=stdata.cw
+	h=stdata.ch
+	o.x+o.vx,o.y+o.vy,o.x+o.vx+w-1,o.y+o.vy+h-1
 
 collision=(o)->
 	x1,y1,x2,y2=aabb o
@@ -79,29 +88,29 @@ export draw=(o)->
 	-- sprites from state data
 	stdata=o.states[o.state or "idle"]
 	o.curframe=o.curframe or 0
-	id=stdata.sprt+o.curframe*stdata.w
-	fhold=fget8 id
+
+	-- get frame hold time
+	fhold=fget8 stdata.sprt+o.curframe*stdata.w
+
+	-- cycle frames after each frame hold
 	if o.tic>fhold
-		print "hi"
 		o.curframe+=1
 		o.tic=0
 	if o.curframe>=stdata.framecnt or fhold==0
-		print "yo"
 		o.curframe=0
 	id=stdata.sprt+o.curframe*stdata.w
-	x=o.x+stdata.ox
-	y=o.y+stdata.oy
+
 	w=stdata.w
 	h=stdata.h
 	s=o.scale or 1
 	f=o.flip or 0
-	print "id:#{id}"
-	print "fhold:#{fhold}"
-	print "curframe:#{o.curframe}"
-	print "framecnt:#{stdata.framecnt}"
+	-- TODO fix offset when flipped
+	x=o.x+stdata.ox
+	y=o.y+stdata.oy
 	spr id,x%240,y%136,stdata.trans,s,f,0,w,h
+
 	if hitbox
-		rectb o.x%240,o.y%136,o.w,o.h,3
+		rectb o.x%240,o.y%136,stdata.cw,stdata.ch,3
 
 export TIC=->
 	-- input
