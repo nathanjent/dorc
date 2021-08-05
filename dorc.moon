@@ -64,10 +64,10 @@ FLGR=0x14404
 fget8=(id)->peek FLGR+id
 fset8=(id)->poke FLGR+id,val
 
-fget4=(id,top)->
- peek4 (top and 1 or 0)+2*(FLGR+id)
-fset4=(id,top,val)->
- poke4 (top and 1 or 0)+2*(FLGR+id),val
+fget4=(id,low)->
+ peek4 (low and 1 or 0)+2*(FLGR+id)
+fset4=(id,low,val)->
+ poke4 (low and 1 or 0)+2*(FLGR+id),val
 
 solid=(x,y)->fget(mget(x//8,y//8),0)
 
