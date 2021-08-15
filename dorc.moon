@@ -1,6 +1,6 @@
 -- title:  Daring Orc
--- author: Nathan Jent
--- desc:   Jump and Slash!
+-- author: GR8N8
+-- desc:   A Cavernous Adventure!
 -- script: moon
 
 t=0
