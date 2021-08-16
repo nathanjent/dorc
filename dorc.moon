@@ -4,11 +4,13 @@
 -- script: moon
 
 t=0
-showaabb=false
+showaabb=true
 entities={}
 player=
-	x:20
-	y:104
+	cx:20
+	cy:104
+	cw:8
+	ch:8
 	vx:0
 	vy:0
 	ax:.1
@@ -16,15 +18,15 @@ player=
 	mvx:1.3
 	fx:.9
 	jmp:-3.1
-	state:"idle"
+	mode:"idle"
 	tic:0
-	transcolor:14
 	health:3
 	maxhealth:5
-	states:
+	modes:
 		idle:
 			sprt: 448
-			framecnt:1
+			trans:0
+			spriteSeqLen:1
 			ox:-3
 			oy:-1
 			cw:11
@@ -34,7 +36,8 @@ player=
 		attack:
 			norepeat:true
 			sprt: 450
-			framecnt:4
+			trans:0
+			spriteSeqLen:4
 			ox:-3
 			oy:-1
 			cw:11
@@ -43,7 +46,8 @@ player=
 			h:2
 		jump:
 			sprt:494
-			framecnt:1
+			trans:0
+			spriteSeqLen:1
 			ox:-3
 			oy:-1
 			cw:11
@@ -52,7 +56,8 @@ player=
 			h:2
 		walk:
 			sprt:480
-			framecnt:6
+			trans:0
+			spriteSeqLen:6
 			ox:-3
 			oy:-1
 			cw:11
@@ -74,10 +79,7 @@ fset4=(id,low,val)->
 solid=(x,y)->fget(mget(x//8,y//8),0)
 
 aabb=(o)->
-	stdata=o.states[o.state or "idle"]
-	w=stdata.cw
-	h=stdata.ch
-	o.x+o.vx,o.y+o.vy,o.x+o.vx+w-1,o.y+o.vy+h-1
+	o.cx+o.vx,o.cy+o.vy,o.cx+o.vx+o.cw-1,o.cy+o.vy+o.ch-1
 
 collision=(o)->
 	x1,y1,x2,y2=aabb o
@@ -94,37 +96,33 @@ ceilingCollision=(o)->
 	x1,y1,x2,_=aabb o
 	solid(x1,y1) or solid(x2,y1)
 
-export draw=(o)->
-	-- sprites from state data
-	stdata=o.states[o.state or "idle"]
-	o.curframe=o.curframe or 0
+export updateFrames=(o)->
+	-- sprites from mode data
+	mData=o.modes[o.mode or "idle"]
+	o.curFrame=o.curFrame or 0
 
-	-- get frame hold time
-	fhold=fget8 stdata.sprt+o.curframe*stdata.w
+	-- get current frame hold from high sprite flag
+	frameHold=fget4 mData.sprt+o.curFrame*mData.w
 
 	-- cycle frames after each frame hold
-	if o.tic>fhold
-		o.curframe+=1
+	if o.tic>frameHold
+		o.curFrame+=1
 		o.tic=0
-	if o.curframe>=stdata.framecnt or fhold==0
-		o.curframe=0
-	id=stdata.sprt+o.curframe*stdata.w
+	if o.curFrame>=mData.spriteSeqLen or frameHold==0
+		o.curFrame=0
 
-	w=stdata.w
-	h=stdata.h
-	s=o.scale or 1
-	f=o.flip or 0
-	trans=stdata.trans or 0
-	x= if f==1
+	o.sprite=mData.sprt+o.curFrame*mData.w
+	o.cw=mData.cw
+	o.ch=mData.ch
+	o.w=mData.w
+	o.h=mData.h
+	o.trans=mData.trans
+	o.x= if o.flip==1
 		-- TODO fix offset when flipped
-		o.x+stdata.ox//stdata.w
+		(o.cx-mData.ox-mData.cw+mData.w)%240
 	else
-		o.x+stdata.ox
-	y=o.y+stdata.oy
-	spr id,x%240,y%136,trans,s,f,0,w,h
-
-	if showaabb
-		rectb o.x%240,o.y%136,stdata.cw,stdata.ch,2
+		(o.cx+mData.ox)%240
+	o.y=(o.cy+mData.oy)%136
 
 draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
 	for i=0,h-1
@@ -144,62 +142,71 @@ drawHud=(player)->
 		hearts..=player.health>i and "@" or "^"
 	w=font hearts,5,3,0
 
+drawEntities=(entities)->
+	for e in *entities
+		spr e.sprite or 1,e.x or 120,e.y or 63,
+			e.trans or -1,e.scale or 1,
+			e.flip or 0,e.rotate or 0,
+			e.w or 1,e.h or 1
+
 export TIC=->
 	-- input
-	if player.state!="attack" and
-			btnp 5,0,player.states["attack"].framecnt+25
-		player.state="attack"
+	if player.mode!="attack" and
+			btnp 5,0,player.modes["attack"].spriteSeqLen+25
+		player.mode="attack"
 
 	if btn 2
 		if player.vx>-player.mvx
 			player.vx-=player.ax
 		player.flip=1
-		if player.state=="idle"
-			player.state="walk"
+		if player.mode=="idle"
+			player.mode="walk"
 	else if btn 3
 		if player.vx<player.mvx
 			player.vx+=player.ax
 		player.flip=0
-		if player.state=="idle"
-			player.state="walk"
+		if player.mode=="idle"
+			player.mode="walk"
 
 	if collision player
 		player.vx=0
 
 	if groundCollision player
 		player.vy=0
-		if player.state=="jump"
-			player.state="idle"
+		if player.mode=="jump"
+			player.mode="idle"
 	else
 		player.vy+=player.ay
 
 	if player.vy==0 and btnp 4
 		player.vy=player.jmp
-		player.state="jump"
+		player.mode="jump"
 
 	if ceilingCollision player
 		player.vy=0
 
-	stdata=player.states[player.state]
+	mData=player.modes[player.mode]
 
-	-- Return to idle if state is short-lived
-	if stdata.norepeat and
-		(player.curframe or 0)+1>=stdata.framecnt or
-			(player.vx>-.1 and player.vx<.1 and player.state=="walk")
-		player.state="idle"
+	-- Return to idle if mode is short-lived
+	if mData.norepeat and
+		(player.curFrame or 0)+1>=mData.spriteSeqLen or
+			(player.vx>-.1 and player.vx<.1 and player.mode=="walk")
+		player.mode="idle"
 
 	-- apply physics
 	player.vx*=player.fx
-	player.x+=player.vx
-	player.y+=player.vy
+	player.cx+=player.vx
+	player.cy+=player.vy
+
+	updateFrames player
 
 	cls 13
-	map (player.x//240)*30,(player.y//136)*17,30,17,0,0,0
+	map (player.cx//240)*30,(player.cy//136)*17,30,17,0,0,0
 	if t<180
 		font "Daring Orc",20,20,0,2,2,false,3
 		font "A Cavernous Adventure",45,46,0,3,2,false,1
-		x=player.x+10
-		y=player.y-27
+		x=player.cx+10
+		y=player.cy-27
 		draw9 160,x,y,5,4,0
 		-- treasure
 		spr 3,x+6,y+9,15,1,0,0,1,2
@@ -208,11 +215,10 @@ export TIC=->
 	else
 		drawHud player
 
-	-- print "player state: #{player.state}",1,1,4
-	-- print "player curframe: #{player.curframe}",1,8,4
-	-- print "player state framecnt: #{stdata.framecnt}",1,15,4
+	drawEntities entities
+	if showaabb
+		rectb player.cx%240,player.cy%136,player.cw,player.ch,2
 
-	draw player
 	t+=1
 	player.tic+=1
 
