@@ -13,15 +13,15 @@ player=
 	ch:8
 	vx:0
 	vy:0
+	vxMax:1.3
+	vyMax:-3.1
 	ax:.1
 	ay:.2
-	mvx:1.3
 	fx:.9
-	jmp:-3.1
 	mode:"idle"
 	tic:0
 	health:3
-	maxhealth:5
+	healthMax:5
 	modes:
 		idle:
 			sprt: 448
@@ -88,13 +88,27 @@ collision=(o)->
 			if solid(x,y)
 				return true
 
+wallCollision=(o)->
+	x1,y1,x2,y2=aabb o
+	x = if o.flip == 1
+		x1
+	else
+		x2
+	for y=y1,y2-o.vy
+		if solid(x,y)
+			return true
+
 groundCollision=(o)->
 	x1,_,x2,y2=aabb o
-	solid(x1,y2+1) or solid(x2,y2+1)
+	for x=x1,x2
+		if solid(x,y2+1)
+			return true
 
 ceilingCollision=(o)->
 	x1,y1,x2,_=aabb o
-	solid(x1,y1) or solid(x2,y1)
+	for x=x1,x2
+		if solid(x,y1)
+			return true
 
 export updateFrames=(o)->
 	-- sprites from mode data
@@ -138,7 +152,7 @@ draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
 
 drawHud=(player)->
 	hearts=""
-	for i=1,player.maxhealth
+	for i=1,player.healthMax
 		hearts..=player.health>i and "@" or "^"
 	w=font hearts,5,3,0
 
@@ -156,19 +170,19 @@ export TIC=->
 		player.mode="attack"
 
 	if btn 2
-		if player.vx>-player.mvx
+		if player.vx>-player.vxMax
 			player.vx-=player.ax
 		player.flip=1
 		if player.mode=="idle"
 			player.mode="walk"
 	else if btn 3
-		if player.vx<player.mvx
+		if player.vx<player.vxMax
 			player.vx+=player.ax
 		player.flip=0
 		if player.mode=="idle"
 			player.mode="walk"
 
-	if collision player
+	if wallCollision player
 		player.vx=0
 
 	if groundCollision player
@@ -179,7 +193,7 @@ export TIC=->
 		player.vy+=player.ay
 
 	if player.vy==0 and btnp 4
-		player.vy=player.jmp
+		player.vy=player.vyMax
 		player.mode="jump"
 
 	if ceilingCollision player
