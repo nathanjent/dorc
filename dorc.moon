@@ -5,66 +5,65 @@
 
 t=0
 showaabb=true
-entities={}
-player=
-	cx:20
-	cy:104
-	cw:8
-	ch:8
-	vx:0
-	vy:0
-	vxMax:1.3
-	vyMax:-3.1
-	ax:.1
-	ay:.2
-	fx:.9
-	mode:"idle"
-	tic:0
-	health:3
-	healthMax:5
-	modes:
-		idle:
-			sprt: 448
-			trans:0
-			spriteSeqLen:1
-			ox:-3
-			oy:-1
-			cw:11
-			ch:15
-			w:2
-			h:2
-		attack:
-			norepeat:true
-			sprt: 450
-			trans:0
-			spriteSeqLen:4
-			ox:-3
-			oy:-1
-			cw:11
-			ch:15
-			w:3
-			h:2
-		jump:
-			sprt:494
-			trans:0
-			spriteSeqLen:1
-			ox:-3
-			oy:-1
-			cw:11
-			ch:15
-			w:2
-			h:2
-		walk:
-			sprt:480
-			trans:0
-			spriteSeqLen:6
-			ox:-3
-			oy:-1
-			cw:11
-			ch:15
-			w:2
-			h:2
-table.insert entities,player
+entities=
+	player:
+		cx:20
+		cy:104
+		cw:8
+		ch:8
+		vx:0
+		vy:0
+		vxMax:1.3
+		vyMax:-3.1
+		ax:.1
+		ay:.2
+		fx:.9
+		mode:"idle"
+		tic:0
+		health:3
+		healthMax:5
+		modes:
+			idle:
+				sprt: 448
+				trans:0
+				spriteSeqLen:1
+				ox:-3
+				oy:-1
+				cw:11
+				ch:15
+				w:2
+				h:2
+			attack:
+				norepeat:true
+				sprt: 450
+				trans:0
+				spriteSeqLen:4
+				ox:-3
+				oy:-1
+				cw:11
+				ch:15
+				w:3
+				h:2
+			jump:
+				sprt:494
+				trans:0
+				spriteSeqLen:1
+				ox:-3
+				oy:-1
+				cw:11
+				ch:15
+				w:2
+				h:2
+			walk:
+				sprt:480
+				trans:0
+				spriteSeqLen:6
+				ox:-3
+				oy:-1
+				cw:11
+				ch:15
+				w:2
+				h:2
 
 -- flag as byte
 FLGR=0x14404
@@ -157,13 +156,14 @@ drawHud=(player)->
 	w=font hearts,5,3,0
 
 drawEntities=(entities)->
-	for e in *entities
+	for id,e in pairs entities
 		spr e.sprite or 1,e.x or 120,e.y or 63,
 			e.trans or -1,e.scale or 1,
 			e.flip or 0,e.rotate or 0,
 			e.w or 1,e.h or 1
 
 export TIC=->
+	player=entities.player
 	-- input
 	if player.mode!="attack" and
 			btnp 5,0,player.modes["attack"].spriteSeqLen+25
