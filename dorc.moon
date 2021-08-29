@@ -161,77 +161,87 @@ drawEntities=(entities)->
 			e.trans or -1,e.scale or 1,
 			e.flip or 0,e.rotate or 0,
 			e.w or 1,e.h or 1
+		if showaabb
+			rectb e.cx%240,e.cy%136,e.cw,e.ch,2
+		if e.isPlayer
+			if t<180
+				font "Daring Orc",20,20,0,2,2,false,3
+				font "A Cavernous Adventure",45,46,0,3,2,false,1
+				x=e.cx+10
+				y=e.cy-27
+				draw9 160,x,y,5,4,0
+				-- treasure
+				spr 3,x+6,y+9,15,1,0,0,1,2
+				-- elder
+				spr 416+(t%60)//30*2,x+17,y+8,0,1,0,0,2,2
+			else
+				drawHud e
 
-export TIC=->
-	player=entities.player
+
+updateMovement=(o)->
 	-- input
-	if player.mode!="attack" and
-			btnp 5,0,player.modes["attack"].spriteSeqLen+25
-		player.mode="attack"
+	if o.mode!="attack" and
+			btnp 5,0,o.modes["attack"].spriteSeqLen+25
+		o.mode="attack"
 
 	if btn 2
-		if player.vx>-player.vxMax
-			player.vx-=player.ax
-		player.flip=1
-		if player.mode=="idle"
-			player.mode="walk"
+		if o.vx>-o.vxMax
+			o.vx-=o.ax
+		o.flip=1
+		if o.mode=="idle"
+			o.mode="walk"
 	else if btn 3
-		if player.vx<player.vxMax
-			player.vx+=player.ax
-		player.flip=0
-		if player.mode=="idle"
-			player.mode="walk"
+		if o.vx<o.vxMax
+			o.vx+=o.ax
+		o.flip=0
+		if o.mode=="idle"
+			o.mode="walk"
 
-	if wallCollision player
-		player.vx=0
+	if wallCollision o
+		o.vx=0
 
-	if groundCollision player
-		player.vy=0
-		if player.mode=="jump"
-			player.mode="idle"
+	if groundCollision o
+		o.vy=0
+		if o.mode=="jump"
+			o.mode="idle"
 	else
-		player.vy+=player.ay
+		o.vy+=o.ay
 
-	if player.vy==0 and btnp 4
-		player.vy=player.vyMax
-		player.mode="jump"
+	if o.vy==0 and btnp 4
+		o.vy=o.vyMax
+		o.mode="jump"
 
-	if ceilingCollision player
-		player.vy=0
+	if ceilingCollision o
+		o.vy=0
 
-	mData=player.modes[player.mode]
+	mData=o.modes[o.mode]
 
 	-- Return to idle if mode is short-lived
 	if mData.norepeat and
-		(player.curFrame or 0)+1>=mData.spriteSeqLen or
-			(player.vx>-.1 and player.vx<.1 and player.mode=="walk")
-		player.mode="idle"
+		(o.curFrame or 0)+1>=mData.spriteSeqLen or
+			(o.vx>-.1 and o.vx<.1 and o.mode=="walk")
+		o.mode="idle"
 
 	-- apply physics
-	player.vx*=player.fx
-	player.cx+=player.vx
-	player.cy+=player.vy
+	o.vx*=o.fx
+	o.cx+=o.vx
+	o.cy+=o.vy
 
-	updateFrames player
+update=(o)->
+	updateMovement o
+	updateFrames o
+
+export TIC=->
+	player = entities.player
+	player.isPlayer=true
+
+	for k,e in pairs entities
+		update e
 
 	cls 13
 	map (player.cx//240)*30,(player.cy//136)*17,30,17,0,0,0
-	if t<180
-		font "Daring Orc",20,20,0,2,2,false,3
-		font "A Cavernous Adventure",45,46,0,3,2,false,1
-		x=player.cx+10
-		y=player.cy-27
-		draw9 160,x,y,5,4,0
-		-- treasure
-		spr 3,x+6,y+9,15,1,0,0,1,2
-		-- elder
-		spr 416+(t%60)//30*2,x+17,y+8,0,1,0,0,2,2
-	else
-		drawHud player
 
 	drawEntities entities
-	if showaabb
-		rectb player.cx%240,player.cy%136,player.cw,player.ch,2
 
 	t+=1
 	player.tic+=1
