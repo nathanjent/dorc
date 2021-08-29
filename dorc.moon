@@ -137,47 +137,6 @@ export updateFrames=(o)->
 		(o.cx+mData.ox)%240
 	o.y=(o.cy+mData.oy)%136
 
-draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
-	for i=0,h-1
-		ty=y+8*i
-		for j=0,w-1
-			tx=x+8*j
-			sprt=id
-			if i==h-1 then sprt+=2*16
-			else if i>0 then sprt+=1*16
-			if j==w-1 then sprt+=2
-			else if j>0 then sprt+=1
-			spr sprt,tx,ty,c,s,f,r,sw,sh
-
-drawHud=(player)->
-	hearts=""
-	for i=1,player.healthMax
-		hearts..=player.health>i and "@" or "^"
-	w=font hearts,5,3,0
-
-drawEntities=(entities)->
-	for id,e in pairs entities
-		spr e.sprite or 1,e.x or 120,e.y or 63,
-			e.trans or -1,e.scale or 1,
-			e.flip or 0,e.rotate or 0,
-			e.w or 1,e.h or 1
-		if showaabb
-			rectb e.cx%240,e.cy%136,e.cw,e.ch,2
-		if e.isPlayer
-			if t<180
-				font "Daring Orc",20,20,0,2,2,false,3
-				font "A Cavernous Adventure",45,46,0,3,2,false,1
-				x=e.cx+10
-				y=e.cy-27
-				draw9 160,x,y,5,4,0
-				-- treasure
-				spr 3,x+6,y+9,15,1,0,0,1,2
-				-- elder
-				spr 416+(t%60)//30*2,x+17,y+8,0,1,0,0,2,2
-			else
-				drawHud e
-
-
 updateMovement=(o)->
 	-- input
 	if o.mode!="attack" and
@@ -231,17 +190,60 @@ update=(o)->
 	updateMovement o
 	updateFrames o
 
+draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
+	for i=0,h-1
+		ty=y+8*i
+		for j=0,w-1
+			tx=x+8*j
+			sprt=id
+			if i==h-1 then sprt+=2*16
+			else if i>0 then sprt+=1*16
+			if j==w-1 then sprt+=2
+			else if j>0 then sprt+=1
+			spr sprt,tx,ty,c,s,f,r,sw,sh
+
+drawHud=(player)->
+	hearts=""
+	for i=1,player.healthMax
+		hearts..=player.health>i and "@" or "^"
+	w=font hearts,5,3,0
+
+drawDialog=(x,y,w,h,text,color)->
+	rect x,y,w,h,color
+
+
+draw=(e, id)->
+	spr e.sprite or 1,e.x or 120,e.y or 63,
+		e.trans or -1,e.scale or 1,
+		e.flip or 0,e.rotate or 0,
+		e.w or 1,e.h or 1
+	if showaabb
+		rectb e.cx%240,e.cy%136,e.cw,e.ch,2
+	if id=='player'
+		if t<180
+			font "Daring Orc",20,20,0,2,2,false,3
+			font "A Cavernous Adventure",45,46,0,3,2,false,1
+			x=e.cx+10
+			y=e.cy-27
+			draw9 160,x,y,5,4,0
+			-- treasure
+			spr 3,x+6,y+9,15,1,0,0,1,2
+			-- elder
+			spr 416+(t%60)//30*2,x+17,y+8,0,1,0,0,2,2
+		else
+			drawHud e
+
 export TIC=->
 	player = entities.player
-	player.isPlayer=true
 
-	for k,e in pairs entities
-		update e
+	for id,e in pairs entities
+		update e,id
 
 	cls 13
 	map (player.cx//240)*30,(player.cy//136)*17,30,17,0,0,0
 
-	drawEntities entities
+	for id,e in pairs entities
+		draw e,id
 
 	t+=1
 	player.tic+=1
