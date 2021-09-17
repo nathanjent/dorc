@@ -208,18 +208,39 @@ drawHud=(player)->
 		hearts..=player.health>i and "@" or "^"
 	w=font hearts,5,3,0
 
+export wordwrap=(str,limit)->
+	lines={}
+	line=""
+	str\gsub "(%S+)(%s*)",(word,spaces)->
+		s=line..word
+		if #s >= limit
+				table.insert lines,line
+				line=word
+		else
+			line=s
+		if #line + #spaces < limit
+			spaces\gsub ".",(c)->
+				if c == '\n'
+					table.insert lines,line
+					line=""
+				else if c
+					line..=c
+	table.insert lines,line
+	return lines
+
 drawDialog=(x,y,w,h,text,color)->
 	rect x,y,w,h,color
-
 
 draw=(e, id)->
 	spr e.sprite or 1,e.x or 120,e.y or 63,
 		e.trans or -1,e.scale or 1,
 		e.flip or 0,e.rotate or 0,
 		e.w or 1,e.h or 1
+
 	if showaabb
 		rectb e.cx%240,e.cy%136,e.cw,e.ch,2
-	if id=='player'
+
+	if id and id=='player'
 		if t<180
 			font "Daring Orc",20,20,0,2,2,false,3
 			font "A Cavernous Adventure",45,46,0,3,2,false,1

@@ -4,13 +4,15 @@ require "dorc"
 testObj=
 	x:120
 	y:68
-	state:"idle"
+	cx:120
+	cy:68
+	mode:"idle"
 	tic:0
 	transcolor:14
-	states:
+	modes:
 		idle:
 			sprt: 256
-			framecnt:1
+			spriteSeqLen:1
 			trans:14
 			ox:-2
 			oy:-1
@@ -24,38 +26,52 @@ export peek=(addr)->
 		[256]:1
 	d[addr-FLGREG]
 
+export peek4=(addr,low)->
+	d=
+		[256]:1
+	id=(addr / ((low and 1 or 0) + 2))-FLGREG
+	d[id]
+
 export mget=(x,y)->0
 
--- Create `spr` method with custom assertion
-assertSpr=(assertion)->
-	if assertion
-		(id,x,y,colorkey,scale,flip,rotate,w,h)->
-			assertion id,x,y,colorkey,scale,flip,rotate,w,h
-	else
-		(id,x,y,colorkey,scale,flip,rotate,w,h)->
-			assert x==testObj.x+testObj.states.idle.ox
-			assert y==testObj.y+testObj.states.idle.oy
-			assert w==testObj.states.idle.w
-			assert h==testObj.states.idle.h
-
 testDrawingIdleFrames=->
-	export spr=assertSpr((id,...)->
-		assert id==256,"Sprite id not matched")
-
 	print "testing tic:#{testObj.tic}"
-	draw testObj
+	updateFrames testObj
+	assert testObj.sprite==256,"Sprite id should be 256, got #{testObj.sprite}"
 
 	testObj.tic+=1
 	print "testing tic:#{testObj.tic}"
-	draw testObj
+	updateFrames testObj
+	assert testObj.sprite==256,"Sprite id should be 256, got #{testObj.sprite}"
 
 	testObj.tic+=1
 	print "testing tic:#{testObj.tic}"
-	draw testObj
+	updateFrames testObj
+	assert testObj.sprite==256,"Sprite id should be 256, got #{testObj.sprite}"
 
 	testObj.tic+=1
 	print "testing tic:#{testObj.tic}"
-	draw testObj
+	updateFrames testObj
+	assert testObj.sprite==256,"Sprite id should be 256, got #{testObj.sprite}"
 
 testDrawingIdleFrames!
 print "Test run complete"
+
+testWordwrap=(input,expectedlines,width)->
+	actual=wordwrap input,width
+	for i,line in ipairs expectedlines
+		assert actual[i]==line,"Lines don't match ['#{line}', '#{actual[i]}']"
+
+testWordwrap(
+	"The brown cow said, \"Wow!\", but she was not the first to see the red balloon pop. It was the goose in the cart who ran away with the donkey's lunch.",
+	{
+	"The brown cow said,",
+	"\"Wow!\", but she was",
+	"not the first to ",
+	"see the red balloon",
+	"pop. It was the ",
+	"goose in the cart ",
+	"who ran away with ",
+	"the donkey's lunch.",
+	},
+	20)
