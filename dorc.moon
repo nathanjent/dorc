@@ -131,8 +131,7 @@ export updateFrames=(o)->
 	o.h=mData.h
 	o.trans=mData.trans
 	o.x= if o.flip==1
-		-- TODO fix offset when flipped
-		(o.cx-mData.ox-mData.cw+mData.w)%240
+		(o.cx+o.cw-mData.ox-o.w*8)%240
 	else
 		(o.cx+mData.ox)%240
 	o.y=(o.cy+mData.oy)%136
