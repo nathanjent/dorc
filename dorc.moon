@@ -17,7 +17,6 @@ entities=
 		vyMax:-3.1
 		ax:.1
 		ay:.2
-		fx:.9
 		mode:"idle"
 		tic:0
 		health:3
@@ -142,18 +141,24 @@ updateMovement=(o)->
 			btnp 5,0,o.modes["attack"].spriteSeqLen+25
 		o.mode="attack"
 
-	if btn 2
-		if o.vx>-o.vxMax
-			o.vx-=o.ax
+	vx=o.vx
+	if o.vx>-o.vxMax and btn 2
+		o.vx-=o.ax
 		o.flip=1
 		if o.mode=="idle"
 			o.mode="walk"
-	else if btn 3
-		if o.vx<o.vxMax
-			o.vx+=o.ax
+	if o.vx<o.vxMax and btn 3
+		o.vx+=o.ax
 		o.flip=0
 		if o.mode=="idle"
 			o.mode="walk"
+	if vx==o.vx
+		if o.vx>0.5
+			o.vx-=o.ax
+		else if o.vx<-0.5
+			o.vx+=o.ax
+		else
+			o.vx=0
 
 	if wallCollision o
 		o.vx=0
@@ -181,12 +186,12 @@ updateMovement=(o)->
 		o.mode="idle"
 
 	-- apply physics
-	o.vx*=o.fx
 	o.cx+=o.vx
 	o.cy+=o.vy
 
-update=(o)->
-	updateMovement o
+update=(o,id)->
+	o.tic+=1
+	updateMovement o,id
 	updateFrames o
 
 draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
@@ -260,15 +265,15 @@ export TIC=->
 		update e,id
 
 	cls 13
-	map 0,17,26,4,32-player.cx//20,88,0
-	map 0,21,30,2,5-player.cx//8,100+player.cy//16,0
+	if player.cx>0 and player.cx<240 and player.cy>0 and player.cy<136
+		map 0,17,26,4,32-player.cx//20,88,0
+		map 0,21,30,2,5-player.cx//8,104,0
 	map (player.cx//240)*30,(player.cy//136)*17,30,17,0,0,0
 
 	for id,e in pairs entities
 		draw e,id
 
 	t+=1
-	player.tic+=1
 
 -- <TILES>
 -- 000:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
