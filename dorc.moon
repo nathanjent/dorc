@@ -3,83 +3,26 @@
 -- desc:   A Cavernous Adventure!
 -- script: moon
 
-t=0
 showaabb=false
 
-lerp=(a,b,t)->(1-t)*a + t*b
-
-view=
-	mx:0
-	my:0
-
-entities=
-	player:
-		cx:20
-		cy:104
-		cw:8
-		ch:8
-		vx:0
-		vy:0
-		vxMax:1.3
-		vyMax:-3.1
-		ax:.1
-		ay:.2
-		mode:"idle"
-		tic:0
-		health:3
-		healthMax:5
-		modes:
-			idle:
-				sprt: 448
-				trans:0
-				spriteSeqLen:1
-				ox:-3
-				oy:-1
-				cw:11
-				ch:15
-				w:2
-				h:2
-			attack:
-				norepeat:true
-				sprt: 450
-				trans:0
-				spriteSeqLen:4
-				ox:-3
-				oy:-1
-				cw:11
-				ch:15
-				w:3
-				h:2
-			jump:
-				sprt:494
-				trans:0
-				spriteSeqLen:1
-				ox:-3
-				oy:-1
-				cw:11
-				ch:15
-				w:2
-				h:2
-			walk:
-				sprt:480
-				trans:0
-				spriteSeqLen:6
-				ox:-3
-				oy:-1
-				cw:11
-				ch:15
-				w:2
-				h:2
+lerp=(a,b,t)->(1-t)*a+t*b
+invlerp=(a,b,v)->(v-a)/(b-a)
+remap=(imin,imax,omin,omax,v)->
+	lerp omin,omax,invlerp(imin,imax,v)
+clamp=(min,max,v)->
+	v<min and min or v > max and max or v
+sign=(v)->v<0 and -1 or 1
 
 -- flag as byte
 FLGR=0x14404
 fget8=(id)->peek FLGR+id
-fset8=(id)->poke FLGR+id,val
+fset8=(id,val)->poke FLGR+id,val
 
+-- flag as nibble
 fget4=(id,low)->
- peek4 (low and 1 or 0)+2*(FLGR+id)
+	peek4 (low and 1 or 0)+2*(FLGR+id)
 fset4=(id,low,val)->
- poke4 (low and 1 or 0)+2*(FLGR+id),val
+	poke4 (low and 1 or 0)+2*(FLGR+id),val
 
 solid=(x,y)->fget(mget(x//8,y//8),0)
 
@@ -196,9 +139,9 @@ updateMovement=(o)->
 	o.cx+=o.vx
 	o.cy+=o.vy
 
-update=(o,id)->
+update_ent=(o)->
 	o.tic+=1
-	updateMovement o,id
+	updateMovement o
 	updateFrames o
 
 draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
@@ -217,7 +160,7 @@ drawHud=(player)->
 	hearts=""
 	for i=1,player.healthMax
 		hearts..=player.health>i and "@" or "^"
-	w=font hearts,5,3,0
+	font hearts,5,3,0
 
 export wordwrap=(str,limit)->
 	lines={}
@@ -250,9 +193,9 @@ drawDialog=(x,y,cw,ch,text,bcolor,fcolor)->
 				w = lw
 	rectb x,y,w+8,ch*8,bcolor
 
-draw=(e, id)->
+draw_ent=(e,g)->
 	spr e.sprite or 1,
-		e.x and e.x+view.mx*8 or 120,e.y and e.y+view.my*8 or 63,
+		e.x and e.x+g.view.mx*8 or 120,e.y and e.y+g.view.my*8 or 63,
 		e.trans or -1,e.scale or 1,
 		e.flip or 0,e.rotate or 0,
 		e.w or 1,e.h or 1
@@ -260,49 +203,147 @@ draw=(e, id)->
 	if showaabb
 		rectb e.cx%240,e.cy%136,e.cw,e.ch,2
 
-	if id and id=='player'
-		if t<180
-			font "Daring Orc",20,20,0,2,2,false,3
-			font "A Cavernous Adventure",45,46,0,3,2,false,1
-			x=e.cx+10
-			y=e.cy-27
-			draw9 160,x,y,5,4,0
-			-- treasure
-			spr 3,x+6,y+9,15,1,0,0,1,2
-			-- elder
-			spr 416+(t%60)//30*2,x+17,y+8,0,1,0,0,2,2
-		else
-			drawHud e
+update_play=(game)->
+	for _,e in pairs game.entities
+		update_ent e
 
-export TIC=->
-	player = entities.player
-
-	for id,e in pairs entities
-		update e,id,camera
-
+draw_play=(game)->
 	cls 13
+
+	view=game.view
+	player = game.entities.player
 
 	if view.mx==0 and view.my==0
 		map 0,17,26,4,32-player.cx//20,88,0
 		map 0,21,30,2,5-player.cx//8,104,0
 	map (player.cx//240)*30,(player.cy//136)*17,30,17,0,0,0
 
-	for id,e in pairs entities
-		draw e,id,camera
+	for _,e in pairs game.entities
+		draw_ent e,game
 
 	print "player x:#{player.cx} y:#{player.cy}",0,12,3,false,1,true
 	print "view mx:#{view.mx} my:#{view.my}",0,18,3,false,1,true
 
-	drawDialog 30,20,20,5,"I'm a little teapot short and stout. Here is my handle. Here is my spout.",3
+	drawHud player
 
-	lw=font [[
-I'm a little teapot
-short and stout.
-Here is my handle.
-Here is my spout.
-]],30,60
-	rectb 28,58,lw+4,4*8+4,4
-	t+=1
+draw_init=(game)->
+	cls 13
+	map 0,17,26,4,31,88,0
+	map 0,21,30,2,3,104,0
+	map 0,0,30,17,0,0,0
+	font "Daring Orc",20,20,0,2,2,false,3
+	font "A Cavernous Adventure",45,46,0,3,2,false,1
+	print "Press A to start the adventure",30,73,3
+
+draw_intro=(game)->
+	cls 13
+	map 0,17,26,4,31,88,0
+	map 0,21,30,2,3,104,0
+	map 0,0,30,17,0,0,0
+	p=game.entities.player
+	draw_ent p,game
+	x=p.cx+10
+	y=p.cy-27
+	draw9 160,x,y,5,4,0
+
+	-- treasure
+	spr 3,x+6,y+9,15,1,0,0,1,2
+
+	-- elder
+	spr 416+(game.t%60)//30*2,x+17,y+8,0,1,0,0,2,2
+
+	drawDialog 40,30,22,5,"Listen well my son. Go into my caverns and check that the stone is untampered.",3
+
+--	lw=font [[
+--I'm a little teapot
+--short and stout.
+--Here is my handle.
+--Here is my spout.
+--]],30,60
+--	rectb 28,58,lw+4,4*8+4,4
+
+update_intro=(game)->
+	if btnp 4
+		game.update=update_play
+		game.draw=draw_play
+
+update_init=(game)->
+	if btnp 4,60,60
+		p=game.entities.player
+		update_ent p,game
+		game.update=update_intro
+		game.draw=draw_intro
+
+game=
+	t: 0
+	view:
+		mx:0
+		my:0
+	entities:
+		player:
+			cx:20
+			cy:105
+			cw:8
+			ch:8
+			vx:0
+			vy:0
+			vxMax:1.3
+			vyMax:-3.1
+			ax:.1
+			ay:.2
+			mode:"idle"
+			tic:0
+			health:3
+			healthMax:5
+			modes:
+				idle:
+					sprt: 448
+					trans:0
+					spriteSeqLen:1
+					ox:-3
+					oy:-1
+					cw:11
+					ch:15
+					w:2
+					h:2
+				attack:
+					norepeat:true
+					sprt: 450
+					trans:0
+					spriteSeqLen:4
+					ox:-3
+					oy:-1
+					cw:11
+					ch:15
+					w:3
+					h:2
+				jump:
+					sprt:494
+					trans:0
+					spriteSeqLen:1
+					ox:-3
+					oy:-1
+					cw:11
+					ch:15
+					w:2
+					h:2
+				walk:
+					sprt:480
+					trans:0
+					spriteSeqLen:6
+					ox:-3
+					oy:-1
+					cw:11
+					ch:15
+					w:2
+					h:2
+	update:update_init
+	draw:draw_init
+
+export TIC=->
+	game\update game
+	game\draw game
+	game.t+=1
 
 -- <TILES>
 -- 000:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd

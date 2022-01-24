@@ -1,5 +1,8 @@
 -- Test drawing
-require "dorc"
+import
+	updateFrames
+	wordwrap
+	from require "dorc"
 
 testObj=
 	x:120
