@@ -1,7 +1,6 @@
 -- Test drawing
 import
 	updateFrames
-	wordwrap
 	from require "dorc"
 
 testObj=
@@ -59,22 +58,3 @@ testDrawingIdleFrames=->
 
 testDrawingIdleFrames!
 print "Test run complete"
-
-testWordwrap=(input,expectedlines,width)->
-	actual=wordwrap input,width
-	for i,line in ipairs expectedlines
-		assert actual[i]==line,"Lines don't match ['#{line}', '#{actual[i]}']"
-
-testWordwrap(
-	"The brown cow said, \"Wow!\", but she was not the first to see the red balloon pop. It was the goose in the cart who ran away with the donkey's lunch.",
-	{
-	"The brown cow said,",
-	"\"Wow!\", but she was",
-	"not the first to ",
-	"see the red balloon",
-	"pop. It was the ",
-	"goose in the cart ",
-	"who ran away with ",
-	"the donkey's lunch.",
-	},
-	20)
