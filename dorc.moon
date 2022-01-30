@@ -235,8 +235,8 @@ draw_intro=(game)->
 	map 0,0,30,17,0,0,0
 	p=game.entities.player
 	draw_ent p,game
-	x=p.cx+10
-	y=p.cy-27
+	x=90
+	y=75
 	draw9 160,x,y,5,4,0
 
 	-- treasure
@@ -276,7 +276,7 @@ game=
 		my:0
 	entities:
 		player:
-			cx:20
+			cx:65
 			cy:105
 			cw:8
 			ch:8
