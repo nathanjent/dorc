@@ -156,6 +156,14 @@ draw9=(id,x=0,y=0,w=3,h=3,c=0,s=1,f=0,r=0,sw=1,sh=1)->
 			else if j>0 then sprt+=1
 			spr sprt,tx,ty,c,s,f,r,sw,sh
 
+draw_button=(letter,x,y,color=13,fcolor=14,bcolor=15,scale=1)->
+	r=5*scale
+	circ x,y,r,fcolor
+	circb x,y,r,bcolor
+	offset=2.6*scale-r+1
+	print letter,x+offset+1,y+offset,color-1,false,scale
+	print letter,x+offset,y+offset,color,false,scale
+
 drawHud=(player)->
 	hearts=""
 	for i=1,player.healthMax
@@ -182,16 +190,21 @@ export wordwrap=(str,limit)->
 	table.insert lines,line
 	lines
 
-drawDialog=(x,y,cw,ch,text,bcolor,fcolor)->
-	lines=wordwrap text,cw
-	--rect x,y,w+8,ch*8,fcolor
+drawDialog=(x,y,charwidth,text,bcolor=3,fcolor=15)->
+	lines=wordwrap text,charwidth
 	w=8
 	for i,line in pairs lines
-		if i < ch
-			lw=font line,x+4,y-4+i*8,0
-			if lw > w
-				w = lw
-	rectb x,y,w+8,ch*8,bcolor
+		lw=font line,x+4,y-4+i*8,0
+		if lw > w
+			w = lw
+	h=8*(1+#lines)
+	rect x,y,w,h,fcolor
+	for i,line in pairs lines
+		lw=font line,x+4,y-4+i*8,0
+		if lw > w
+			w = lw
+	rectb x,y,w,h,bcolor
+	draw_button "A",x+w,y+h,4,fcolor,bcolor,1
 
 draw_ent=(e,g)->
 	spr e.sprite or 1,
@@ -252,7 +265,9 @@ draw_intro=(game)->
 	-- elder
 	spr 416+(game.t%60)//30*2,x+17,y+8,0,1,0,0,2,2
 
-	drawDialog 40,30,22,5,"Listen well my son. Go into my caverns and check that the stone is untampered.",3
+	drawDialog 40,22,22,
+		"Listen well my son. Go into cave near the edge of our land and check that the Stone of Daring is untampered.",
+		3,14
 
 --	lw=font [[
 --I'm a little teapot
@@ -466,7 +481,7 @@ export TIC=->
 -- 073:0000000000044443004304300000043000000430000004300000043000044443
 -- 074:0000000000004443000430430000004300000043004300430043304300044430
 -- 075:0000000004430043434304300043430000443000004343000043043000430043
--- 076:0000000000043000000430000004300000043000000430000004430000044443
+-- 076:0000000004430000434300000043000000430000004300004343004304444430
 -- 077:0000000004430043434434430043434300430043004300430043004300430043
 -- 078:0000000004430043034430430043434300430443004300430043004300430043
 -- 079:0000000000044430004304430043004300430043004300430043004300044430
@@ -498,7 +513,7 @@ export TIC=->
 -- 105:0000000000000000000000000004300000000000000430000004300000000000
 -- 106:0000000000000000000000000004300000000000000430000004300000043000
 -- 107:0000000000043000000430000004304300044430000434430004304300000000
--- 108:0000000000044300000430000004300000043000000430000004300000000000
+-- 108:0000000000443000000430000004300000043000000430000004300000000000
 -- 109:0000000000000000000000000004444300043443000430430004304300000000
 -- 110:0000000000000000000000000004443000043043000430430004304300000000
 -- 111:0000000000000000000000000000443000043443000430430000443000000000
