@@ -4,6 +4,7 @@
 -- script: moon
 
 showaabb=false
+debug=false
 
 lerp=(a,b,t)->(1-t)*a+t*b
 invlerp=(a,b,v)->(v-a)/(b-a)
@@ -214,25 +215,30 @@ draw_play=(game)->
 	for _,e in pairs game.entities
 		draw_ent e,game
 
-	print "player x:#{player.cx} y:#{player.cy}",0,12,3,false,1,true
-	print "view mx:#{view.mx} my:#{view.my}",0,18,3,false,1,true
+	if debug
+		print "player x:#{player.cx} y:#{player.cy}",0,12,3,false,1,true
+		print "view mx:#{view.mx} my:#{view.my}",0,18,3,false,1,true
 
 	drawHud player
 
+draw_init_map=(maps)->
+	mv=maps.mountains
+	tr=maps.trees
+	it=maps.intro
+	map mv.x,mv.y,mv.w,mv.h,mv.sx,mv.sy,mv.colorkey
+	map tr.x,tr.y,tr.w,tr.h,tr.sx,tr.sy,tr.colorkey
+	map it.x,it.y,it.w,it.h,it.sx,it.sy,it.colorkey
+
 draw_init=(game)->
 	cls 13
-	map 0,17,26,4,31,88,0
-	map 0,21,30,2,3,104,0
-	map 0,0,30,17,0,0,0
+	draw_init_map game.maps
 	font "Daring Orc",20,20,0,2,2,false,3
 	font "A Cavernous Adventure",45,46,0,3,2,false,1
 	print "Press A to start the adventure",30,73,3
 
 draw_intro=(game)->
 	cls 13
-	map 0,17,26,4,31,88,0
-	map 0,21,30,2,3,104,0
-	map 0,0,30,17,0,0,0
+	draw_init_map game.maps
 	p=game.entities.player
 	draw_ent p,game
 	x=90
@@ -271,9 +277,36 @@ update_init=(game)->
 
 game=
 	t: 0
+	update:update_init
+	draw:draw_init
 	view:
 		mx:0
 		my:0
+	maps:
+		mountains:
+			x:0
+			y:17
+			w:26
+			h:4
+			sx:29
+			sy:88
+			colorkey:0
+		trees:
+			x:0
+			y:21
+			w:30
+			h:2
+			sx:-3
+			sy:104
+			colorkey:0
+		intro:
+			x:0
+			y:0
+			w:30
+			h:17
+			sx:0
+			sy:0
+			colorkey:0
 	entities:
 		player:
 			cx:65
@@ -332,8 +365,6 @@ game=
 					ch:15
 					w:2
 					h:2
-	update:update_init
-	draw:draw_init
 
 export TIC=->
 	game\update game
@@ -418,7 +449,6 @@ export TIC=->
 -- 029:2220000021200000112000001240000012400000122000002122000012122000
 -- 030:0008984400888889008448990004488800000888000008880000088900008898
 -- 031:34999944998099e0899009e0880000e0980000e0980000e089000000889000e0
--- 032:0000000000000000000000000000000000043000000000000000000000000000
 -- 033:0000000000043000000443000004430000044300000000000004430000000000
 -- 034:0000000004430443043004300000000000000000000000000000000000000000
 -- 035:0000000000430430044444430043043000430430044444430043043000000000
